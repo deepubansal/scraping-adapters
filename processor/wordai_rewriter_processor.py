@@ -1,4 +1,4 @@
-from rewriter import ContentProcessor
+from processor import ContentProcessor
 from wordai.turing import TuringWordAi as WordAi
 import json
 import os
@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from bs4 import Comment
 import time
 from wordai.exceptions import SpinError
-from wordai.exceptions import NetworkError
+
 
 class WordAIProcessor(ContentProcessor):
 
@@ -47,5 +47,6 @@ class WordAIProcessor(ContentProcessor):
         variation = self.rewriter.unique_variation(str(input_soup).decode('utf-8'))
         return variation
 
-# with open('/Users/dbansal/Work/MyCode/scraping/mic/Output/articles/gst-rates-for-lic-policies-and-other-insurance-premiums') as f:
-#     WordAIProcessor().process(source_text=(f.read()))
+if __name__ == "__main__":
+    with open('/Users/dbansal/Work/MyCode/scraping/mic/Output/articles/file2') as f:
+        WordAIProcessor().process(source_text=(f.read()))

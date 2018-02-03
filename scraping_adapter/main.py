@@ -3,8 +3,8 @@ import sys
 import json
 import shutil
 import urllib
-from rewriter.wordai_rewriter_processor import WordAIProcessor
-import time
+from processor.wordai_rewriter_processor import WordAIProcessor
+
 
 class ScrapingAdapter:
 
@@ -22,9 +22,6 @@ class ScrapingAdapter:
                 print "Source Directory '{0}' should have posts directory '{1}' and metadata file '{1}.info'"\
                     .format(source_dir, source_posts_dir_name)
                 sys.exit(1)
-        # if os.path.exists(target_dir):
-        #     print "Output directory should not already exist."
-        #     sys.exit(1)
         with open(self.posts_metadata_file_path, 'r') as f:
             self.source_metadata = json.loads(f.read())
         self.sequence_prefix = sequence_prefix
@@ -106,10 +103,10 @@ class ScrapingAdapter:
             f.write(processed_content)
         target_metadata["information"]["content-file"] = os.path.join(self.contents_subdir_name, post_name)
 
-
-adapter = ScrapingAdapter('/Users/dbansal/Work/MyCode/scraping/mic/Output',
-                          '/Users/dbansal/Work/MyCode/wp-auto-poster/posts')
-adapter.generate()
+if __name__ == "__main__":
+    adapter = ScrapingAdapter('/Users/dbansal/Work/MyCode/scraping/mic/Output',
+                              '/Users/dbansal/Work/MyCode/wp-auto-poster/posts')
+    adapter.generate()
 
 
 
