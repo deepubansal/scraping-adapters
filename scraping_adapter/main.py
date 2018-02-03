@@ -3,14 +3,16 @@ import sys
 import json
 import shutil
 import urllib
-
+from rewriter.wordai_rewriter_processor import WordAIProcessor
+import time
 
 class ScrapingAdapter:
 
     contents_subdir_name= 'files'
     metadata_filename = "metadata.json"
 
-    def __init__(self, source_dir, target_dir, source_posts_dir_name='articles', sequence_prefix="posts", filename_field='article'):
+    def __init__(self, source_dir, target_dir, source_posts_dir_name='articles', sequence_prefix="posts", filename_field='article',
+                 content_processor=WordAIProcessor()):
         self.target_dir = target_dir
         self.posts_dir_path = os.path.join(source_dir, source_posts_dir_name)
         self.posts_metadata_file_path = os.path.join(source_dir, "{}.info".format(source_posts_dir_name))
@@ -20,21 +22,24 @@ class ScrapingAdapter:
                 print "Source Directory '{0}' should have posts directory '{1}' and metadata file '{1}.info'"\
                     .format(source_dir, source_posts_dir_name)
                 sys.exit(1)
-        if os.path.exists(target_dir):
-            print "Output directory should not already exist."
-            sys.exit(1)
+        # if os.path.exists(target_dir):
+        #     print "Output directory should not already exist."
+        #     sys.exit(1)
         with open(self.posts_metadata_file_path, 'r') as f:
             self.source_metadata = json.loads(f.read())
         self.sequence_prefix = sequence_prefix
         self.filename_field = filename_field
+        self.content_processor = content_processor
 
     def generate(self):
         idx = 0
-        os.mkdir(self.target_dir)
+        if not os.path.exists(self.target_dir):
+            os.mkdir(self.target_dir)
         for post_metadata in self.source_metadata:
             idx = idx + 1
             post_name = post_metadata[self.filename_field]
             source_post_file_path = os.path.join(self.posts_dir_path, post_name)
+            print "Processing post: {}".format(source_post_file_path)
             if not self.validate(idx, post_name, source_post_file_path):
                 continue
             target_dir_path = self.get_target_dir_path(idx)
@@ -42,7 +47,7 @@ class ScrapingAdapter:
             target_metadata = ScrapingAdapter.initialize_target_metadata(post_metadata, post_name)
             target_content_subdir_path = os.path.join(target_dir_path, self.contents_subdir_name)
             os.mkdir(target_content_subdir_path)
-            self.copy_post_content(post_name, source_post_file_path, target_content_subdir_path, target_metadata)
+            self.process_post_content(post_name, source_post_file_path, target_content_subdir_path, target_metadata)
             self.copy_image_content(post_metadata, post_name, target_content_subdir_path, target_metadata)
             self.dump_metadata_json(target_dir_path, target_metadata)
             print "Generation for post '{0}' completed at index {1}.".format(post_name, idx)
@@ -93,9 +98,12 @@ class ScrapingAdapter:
         else:
             print "No title image data found for '{0}'".format(post_name)
 
-    def copy_post_content(self, post_name, source_post_file_path, target_content_subdir_path, target_metadata):
+    def process_post_content(self, post_name, source_post_file_path, target_content_subdir_path, target_metadata):
         target_content_file_path = os.path.join(target_content_subdir_path, post_name)
-        shutil.copy(source_post_file_path, target_content_file_path)
+        with open(source_post_file_path) as f:
+            processed_content = self.content_processor.process(f.read())
+        with open(target_content_file_path, 'w') as f:
+            f.write(processed_content)
         target_metadata["information"]["content-file"] = os.path.join(self.contents_subdir_name, post_name)
 
 
